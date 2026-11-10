@@ -81,6 +81,8 @@ The bot uses **Socket Mode**. In Socket Mode, the bot opens one outgoing WebSock
 - Slack does not need a public URL or an incoming connection to the bridge. Thus eduroam client isolation and NAT do not stop it.
 
 ### Slack App Setup
+Fast path: at api.slack.com/apps, select **Create New App → From a manifest**, and paste `manifest.json`. It does steps 1–5 below, except the app-level token in step 2.
+
 1. At api.slack.com, create an app "PrintBot" from scratch in the workspace.
 2. Turn on **Socket Mode**. Make an **app-level token** (`xapp-…`) with scope `connections:write`.
 3. Bot token scopes: `files:read`, `chat:write`, `im:history`, `im:read`, `im:write`, `reactions:read`, `reactions:write`.

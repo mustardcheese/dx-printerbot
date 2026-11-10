@@ -10,7 +10,7 @@ Environment variables:
   PRINTER_IP           printer IP on the Wi-Fi Direct network; if set, ping it before each job (optional)
   WIFI_DIRECT_PROFILE  Windows Wi-Fi profile of the printer network, used to reconnect
                        (default: DIRECT-92HL-L2460DW_BRddaf)
-  SUMATRA_PATH         path to SumatraPDF.exe (default: C:\\Program Files\\SumatraPDF\\SumatraPDF.exe)
+  SUMATRA_PATH         path to SumatraPDF.exe (default: Program Files, then %LOCALAPPDATA%\\SumatraPDF)
 """
 import logging
 import os
@@ -26,7 +26,10 @@ from datetime import date, datetime
 PRINTER_NAME = os.environ.get("PRINTER_NAME", "Brother-WiFiDirect")
 PRINTER_IP = os.environ.get("PRINTER_IP", "")
 WIFI_DIRECT_PROFILE = os.environ.get("WIFI_DIRECT_PROFILE", "DIRECT-92HL-L2460DW_BRddaf")
-SUMATRA_PATH = os.environ.get("SUMATRA_PATH", r"C:\Program Files\SumatraPDF\SumatraPDF.exe")
+_SUMATRA_DEFAULTS = [r"C:\Program Files\SumatraPDF\SumatraPDF.exe",
+                     os.path.expandvars(r"%LOCALAPPDATA%\SumatraPDF\SumatraPDF.exe")]  # per-user install
+SUMATRA_PATH = os.environ.get("SUMATRA_PATH") or next(
+    (p for p in _SUMATRA_DEFAULTS if os.path.exists(p)), _SUMATRA_DEFAULTS[0])
 
 MAX_BYTES = 20 * 1024 * 1024
 DAILY_LIMIT = 30
@@ -69,7 +72,10 @@ def print_pdf(path):
         if not _printer_reachable():
             raise PrintError("the printer is not reachable over Wi-Fi Direct")
 
-    r = subprocess.run([SUMATRA_PATH, "-print-to", PRINTER_NAME, "-silent", path], timeout=120)
+    try:
+        r = subprocess.run([SUMATRA_PATH, "-print-to", PRINTER_NAME, "-silent", path], timeout=120)
+    except FileNotFoundError:
+        raise PrintError(f"SumatraPDF was not found at {SUMATRA_PATH}. Set SUMATRA_PATH") from None
     if r.returncode != 0:
         raise PrintError(f"SumatraPDF failed (exit code {r.returncode})")
 
